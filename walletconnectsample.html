@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <base href="https://nearvidia.com/" />
+  <title>ZEN Blockchain Quiz Challenge</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* === Base Styles === */
+    body {
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    .container {
+      text-align: center;
+      max-width: 1200px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+    }
+    h1 {
+      font-size: 4em;
+      font-weight: 700;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
+      animation: glow 2s ease-in-out infinite alternate;
+      margin: 0;
+    }
+    @keyframes glow {
+      from { text-shadow: 0 0 10px rgba(255,255,255,0.7); }
+      to { text-shadow: 0 0 20px rgba(255,255,255,1), 0 0 30px rgba(255,255,255,1); }
+    }
+    #game-area {
+      margin-top: 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .question {
+      font-size: 2em;
+      margin-bottom: 30px;
+      opacity: 0;
+    }
+    .options {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .option {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 15px 30px;
+      margin: 10px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: background 0.3s, transform 0.3s;
+      width: 60%;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      opacity: 0;
+    }
+    .option:hover {
+      background: rgba(255, 255, 255, 0.4);
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+    }
+    .option.correct {
+      background: #27ae60 !important;
+    }
+    .option.wrong {
+      background: #e74c3c !important;
+    }
+    #controls {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    button {
+      background: linear-gradient(90deg, #ff8a00, #e52e71);
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1.1em;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 50px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: all 0.3s ease-in-out;
+      box-shadow: 0 4px 15px rgba(229, 46, 113, 0.4);
+    }
+    button:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(229, 46, 113, 0.6);
+    }
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+    #score {
+      font-size: 1.8em;
+      margin-top: 25px;
+      text-shadow: 0 0 10px rgba(46, 204, 113, 0.7);
+    }
+    #wallet-connect {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 25px;
+      background: linear-gradient(90deg, #ff8a00, #e52e71);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 100;
+    }
+    #wallet-connect:hover {
+      background: linear-gradient(90deg, #e52e71, #ff8a00);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(231, 46, 113, 0.4);
+    }
+    #wallet-status {
+      position: fixed;
+      top: 70px;
+      right: 20px;
+      font-size: 1em;
+      color: #2ecc71;
+      z-index: 100;
+    }
+    .wallet-modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+    .wallet-modal-content {
+      background: #2c2c2c;
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      color: #ecf0f1;
+      text-align: left;
+      opacity: 0;
+      transform: scale(0.5);
+    }
+    .wallet-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .wallet-modal-title {
+      font-size: 1.5em;
+      font-weight: bold;
+    }
+    .wallet-close {
+      color: #aaa;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .wallet-close:hover,
+    .wallet-close:focus {
+      color: #fff;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .wallet-option {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      margin-bottom: 10px;
+      background: #3a3a3a;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .wallet-option:hover {
+      background: #4a4a4a;
+    }
+    .wallet-option img {
+      width: 30px;
+      height: 30px;
+      margin-right: 10px;
+    }
+    .wallet-description {
+      font-size: 0.9em;
+      color: #888;
+      margin-top: 20px;
+    }
+    .get-wallet-btn {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin-top: 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .get-wallet-btn:hover {
+      background: #2980b9;
+    }
+    .achievement {
+      position: fixed;
+      top: 20px;
+      right: -300px;
+      background: rgba(46, 204, 113, 0.9);
+      color: #fff;
+      padding: 15px 25px;
+      border-radius: 8px;
+      transition: right 0.5s;
+      font-size: 1.2em;
+      box-shadow: 0 0 20px rgba(46, 204, 113, 0.5);
+      z-index: 100;
+    }
+    .achievement.show {
+      right: 20px;
+    }
+    #leaderboard {
+      margin-top: 50px;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th,
+    td {
+      padding: 15px;
+      text-align: left;
+      color: #ecf0f1;
+    }
+    th {
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 1.2em;
+    }
+    tr:nth-child(even) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    @media screen and (max-width: 768px) {
+      .option {
+        width: 80%;
+        font-size: 1em;
+      }
+      h1 {
+        font-size: 2.5em;
+      }
+    }
+
+    /* === Dashboard Styles === */
+    #dashboard {
+      display: none;
+      width: 90%;
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+    }
+    #dashboard h2 {
+      margin-bottom: 20px;
+    }
+    #dashboard-nav {
+      margin-bottom: 20px;
+    }
+    #dashboard-nav button {
+      margin: 0 10px;
+      padding: 10px 20px;
+      background: linear-gradient(90deg, #ff8a00, #e52e71);
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+    #dashboard-nav button:hover {
+      transform: translateY(-3px);
+    }
+    #dashboard-content > div {
+      display: none;
+    }
+    #builder-section textarea {
+      width: 100%;
+      height: 200px;
+      border-radius: 5px;
+      border: none;
+      padding: 10px;
+      font-family: monospace;
+      font-size: 1em;
+      margin-bottom: 10px;
+    }
+    #saved-list {
+      list-style: none;
+      padding: 0;
+    }
+    #saved-list li {
+      background: rgba(255,255,255,0.1);
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    #rented-key {
+      display: none;
+      margin-top: 10px;
+    }
+    /* Dashboard toggle button */
+    #dashboard-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 25px;
+      background: linear-gradient(90deg, #ff8a00, #e52e71);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1em;
+      cursor: pointer;
+      z-index: 100;
+      transition: transform 0.3s;
+    }
+    #dashboard-button:hover {
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+<body>
+  <!-- Quiz Container -->
+  <div class="container">
+    <h1>ZEN Blockchain Quiz Challenge</h1>
+    <div id="game-area">
+      <div class="question" id="question">Loading question...</div>
+      <div class="options" id="options">
+        <!-- Options will be generated dynamically -->
+      </div>
+    </div>
+    <div id="controls">
+      <button id="next-button" disabled>Next Question</button>
+    </div>
+    <div id="score">Score: 0</div>
+    <div id="leaderboard">
+      <h2>ZEN Leaderboard</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboard-body">
+          <!-- Leaderboard entries will be added dynamically -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Wallet & Achievement -->
+  <button id="wallet-connect">Connect Wallet</button>
+  <div id="wallet-status"></div>
+  <div class="achievement" id="achievement">
+    <!-- Achievement text will be set via JavaScript -->
+  </div>
+
+  <!-- Wallet Modal -->
+  <div id="wallet-modal" class="wallet-modal">
+    <div class="wallet-modal-content">
+      <div class="wallet-modal-header">
+        <span class="wallet-modal-title">Connect Your Wallet</span>
+        <span class="wallet-close">&times;</span>
+      </div>
+      <div class="wallet-option" id="here-wallet">
+        <img src="https://herewallet.app/favicon-32x32.png" alt="Here Wallet" />
+        <span>Here Wallet</span>
+      </div>
+      <div class="wallet-option" id="ledger">
+        <img src="https://cdn-icons-png.flaticon.com/512/3178/3178308.png" alt="Ledger" />
+        <span>Ledger</span>
+      </div>
+      <div class="wallet-option" id="my-near-wallet">
+        <img src="https://wallet.near.org/favicon.ico" alt="MyNearWallet" />
+        <span>MyNearWallet</span>
+      </div>
+      <div class="wallet-option" id="meteor-wallet">
+        <img src="https://meteorwallet.app/favicon.ico" alt="Meteor Wallet" />
+        <span>Meteor Wallet</span>
+      </div>
+      <div class="wallet-option" id="wallet-connect-option">
+        <img src="https://walletconnect.com/favicon.ico" alt="WalletConnect" />
+        <span>WalletConnect</span>
+      </div>
+      <div class="wallet-option" id="sender">
+        <img src="https://sender.org/favicon.ico" alt="Sender" />
+        <span>Sender</span>
+      </div>
+      <div class="wallet-option" id="nightly">
+        <img src="https://nightly.app/favicon.ico" alt="Nightly" />
+        <span>Nightly</span>
+      </div>
+      <div class="wallet-description">
+        <p>What is a Wallet?</p>
+        <ul>
+          <li>Secure &amp; Manage Your Digital Assets</li>
+          <li>Safely store and transfer your crypto and NFTs.</li>
+          <li>Log In to Any NEAR App</li>
+          <li>No need to create new accounts or credentials. Connect your wallet and you are good to go!</li>
+        </ul>
+      </div>
+      <button class="get-wallet-btn">Get a Wallet</button>
+    </div>
+  </div>
+
+  <iframe src="https://my.herewallet.app/connector/index.html" allow="usb" style="border: none; z-index: 10000; position: fixed; display: none; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+
+  <!-- Dashboard Section -->
+  <div id="dashboard">
+    <h2>Dashboard</h2>
+    <div id="dashboard-nav">
+      <button id="tab-builder">Bot/Workflow Builder</button>
+      <button id="tab-saved">Saved Bots/Workflows</button>
+      <button id="tab-api">Rent API Keys</button>
+    </div>
+    <div id="dashboard-content">
+      <div id="builder-section">
+        <h3>Bot/Workflow Builder</h3>
+        <textarea id="code-editor" placeholder="Write your AI code or workflow here..."></textarea>
+        <br />
+        <button id="save-workflow">Save Workflow</button>
+      </div>
+      <div id="saved-section">
+        <h3>Saved Bots/Workflows</h3>
+        <ul id="saved-list"></ul>
+      </div>
+      <div id="api-section">
+        <h3>Rent API Keys</h3>
+        <p>Rent an API key to access our AI services:</p>
+        <button id="rent-api">Rent API Key</button>
+        <div id="rented-key">
+          <p>Your API Key: <span id="api-key-value"></span></p>
+        </div>
+      </div>
+    </div>
+    <br />
+    <button id="back-to-quiz">Back to Quiz</button>
+  </div>
+
+  <!-- Dashboard Toggle Button -->
+  <button id="dashboard-button">Dashboard</button>
+
+  <!-- Include GSAP and NEAR API JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/near-api-js@0.44.2/dist/near-api-js.min.js"></script>
+  <script>
+    // Get DOM elements for quiz & wallet
+    const questionElement = document.getElementById('question');
+    const optionsElement = document.getElementById('options');
+    const nextButton = document.getElementById('next-button');
+    const scoreDisplay = document.getElementById('score');
+    const achievementDisplay = document.getElementById('achievement');
+    const walletConnectButton = document.getElementById('wallet-connect');
+    const walletStatusDisplay = document.getElementById('wallet-status');
+    const walletModal = document.getElementById('wallet-modal');
+    const walletCloseButton = document.querySelector('.wallet-close');
+    const walletOptions = document.querySelectorAll('.wallet-option');
+    const getWalletButton = document.querySelector('.get-wallet-btn');
+    const leaderboardBody = document.getElementById('leaderboard-body');
+
+    // Get DOM elements for Dashboard
+    const dashboard = document.getElementById('dashboard');
+    const dashboardButton = document.getElementById('dashboard-button');
+    const backToQuizButton = document.getElementById('back-to-quiz');
+    const tabBuilder = document.getElementById('tab-builder');
+    const tabSaved = document.getElementById('tab-saved');
+    const tabApi = document.getElementById('tab-api');
+    const builderSection = document.getElementById('builder-section');
+    const savedSection = document.getElementById('saved-section');
+    const apiSection = document.getElementById('api-section');
+    const saveWorkflowButton = document.getElementById('save-workflow');
+    const codeEditor = document.getElementById('code-editor');
+    const savedList = document.getElementById('saved-list');
+    const rentApiButton = document.getElementById('rent-api');
+    const rentedKeyDiv = document.getElementById('rented-key');
+    const apiKeyValue = document.getElementById('api-key-value');
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let walletConnected = false;
+    let playerName = 'Guest';
+    let wallet = null;
+
+    const questions = [
+      {
+        question: "What is Blockchain?",
+        options: ["A type of food", "A digital ledger of transactions", "A musical instrument", "A programming language"],
+        correct: 1
+      },
+      {
+        question: "What does NFT stand for?",
+        options: ["No Funds Transaction", "Non-Fungible Token", "New Future Technology", "Network File Transfer"],
+        correct: 1
+      },
+      {
+        question: "Which blockchain does ZEN use?",
+        options: ["Ethereum", "Bitcoin", "Ripple", "NEAR Protocol"],
+        correct: 3
+      },
+      {
+        question: "What is the native token of NEAR Protocol?",
+        options: ["ETH", "BTC", "NEAR", "USD"],
+        correct: 2
+      },
+      {
+        question: "Which of the following is a benefit of blockchain?",
+        options: ["Centralization", "Transparency", "High transaction costs", "Slow processing"],
+        correct: 1
+      },
+      {
+        question: "What is a smart contract?",
+        options: ["A legal document", "Self-executing code on the blockchain", "A type of cryptocurrency", "A blockchain explorer"],
+        correct: 1
+      },
+      {
+        question: "What is the purpose of a consensus mechanism in blockchain?",
+        options: ["To create new tokens", "To validate and agree on transactions", "To store data off-chain", "To encrypt messages"],
+        correct: 1
+      },
+      {
+        question: "What is a block in the context of blockchain?",
+        options: ["A unit of measurement", "A type of cryptocurrency", "A collection of transactions", "A smart contract"],
+        correct: 2
+      },
+      {
+        question: "What is the main advantage of decentralization in blockchain?",
+        options: ["Faster transaction speed", "Lower costs", "Increased security and resistance to attacks", "Easier to regulate"],
+        correct: 2
+      },
+      {
+        question: "What is a private key in cryptocurrency?",
+        options: ["A password to your email", "A secret code to access your wallet", "A public address to receive funds", "A type of blockchain"],
+        correct: 1
+      }
+    ];
+
+    // Animate container on page load
+    gsap.from(".container", { duration: 1, opacity: 0, scale: 0.8, ease: "back.out(1.7)" });
+
+    // Load and animate question and options
+    function loadQuestion() {
+      const questionData = questions[currentQuestionIndex];
+      questionElement.textContent = questionData.question;
+      optionsElement.innerHTML = '';
+
+      gsap.fromTo(questionElement, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6 });
+
+      questionData.options.forEach((option, index) => {
+        const optionElement = document.createElement('div');
+        optionElement.className = 'option';
+        optionElement.textContent = option;
+        optionElement.onclick = () => selectOption(index);
+        optionsElement.appendChild(optionElement);
+        gsap.fromTo(optionElement, { opacity: 0, x: -50 }, { opacity: 1, x: 0, duration: 0.6, delay: 0.2 * index });
+      });
+
+      nextButton.disabled = true;
+    }
+
+    // Handle option selection with animations
+    function selectOption(selectedIndex) {
+      const questionData = questions[currentQuestionIndex];
+      const options = document.querySelectorAll('.option');
+
+      if (selectedIndex === questionData.correct) {
+        options[selectedIndex].classList.add('correct');
+        score += 10;
+        showAchievement('Correct Answer! +10 Points');
+      } else {
+        options[selectedIndex].classList.add('wrong');
+        options[questionData.correct].classList.add('correct');
+        showAchievement('Wrong Answer');
+      }
+
+      options.forEach(option => { option.onclick = null; });
+      scoreDisplay.textContent = `Score: ${score}`;
+      gsap.fromTo(scoreDisplay, { scale: 1.2 }, { scale: 1, duration: 0.3, ease: "bounce.out" });
+      nextButton.disabled = false;
+    }
+
+    // Animate transition between questions
+    function nextQuestion() {
+      gsap.to([questionElement, optionsElement], {
+        opacity: 0,
+        duration: 0.5,
+        onComplete: () => {
+          currentQuestionIndex++;
+          if (currentQuestionIndex < questions.length) {
+            loadQuestion();
+          } else {
+            questionElement.textContent = 'Quiz Completed!';
+            optionsElement.innerHTML = '';
+            nextButton.disabled = true;
+            submitScore();
+          }
+        }
+      });
+    }
+
+    // Animate achievement popup using GSAP
+    function showAchievement(text) {
+      achievementDisplay.textContent = text;
+      gsap.fromTo(achievementDisplay, { x: 300, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5 });
+      achievementDisplay.classList.add('show');
+      setTimeout(() => {
+        gsap.to(achievementDisplay, { x: 300, opacity: 0, duration: 0.5, onComplete: () => achievementDisplay.classList.remove('show') });
+      }, 3000);
+    }
+
+    nextButton.addEventListener('click', nextQuestion);
+
+    // Wallet connection handling
+    walletConnectButton.addEventListener('click', () => {
+      if (walletConnected) {
+        disconnectWallet();
+      } else {
+        walletModal.style.display = 'block';
+        gsap.to('.wallet-modal-content', { opacity: 1, scale: 1, duration: 0.5, ease: "back.out(1.7)" });
+      }
+    });
+
+    walletCloseButton.addEventListener('click', () => { walletModal.style.display = 'none'; });
+    window.addEventListener('click', (event) => { if (event.target == walletModal) { walletModal.style.display = 'none'; } });
+    walletOptions.forEach(option => { option.addEventListener('click', () => { connectWallet(option.id); }); });
+    getWalletButton.addEventListener('click', () => { window.open('https://wallet.near.org/', '_blank'); });
+
+    async function connectWallet(walletType) {
+      console.log(`Connecting to ${walletType}...`);
+      walletStatusDisplay.textContent = 'Connecting...';
+      try {
+        const near = await nearApi.connect({
+          networkId: 'testnet',
+          keyStore: new nearApi.keyStores.BrowserLocalStorageKeyStore(),
+          nodeUrl: 'https://rpc.testnet.near.org',
+          walletUrl: 'https://wallet.testnet.near.org',
+          helperUrl: 'https://helper.testnet.near.org',
+          explorerUrl: 'https://explorer.testnet.near.org'
+        });
+        wallet = new nearApi.WalletConnection(near);
+        if (!wallet.isSignedIn()) {
+          await wallet.requestSignIn({ contractId: 'zen.testnet', methodNames: ['submitScore'] });
+        }
+        const account = wallet.account();
+        playerName = account.accountId;
+        walletConnected = true;
+        walletStatusDisplay.textContent = `Connected as ${playerName}`;
+        walletConnectButton.textContent = 'Disconnect';
+        walletModal.style.display = 'none';
+        loadLeaderboard();
+      } catch (error) {
+        console.error('Error connecting wallet:', error);
+        walletStatusDisplay.textContent = 'Connection failed';
+      }
+    }
+
+    function disconnectWallet() {
+      if (wallet) { wallet.signOut(); }
+      walletConnected = false;
+      playerName = 'Guest';
+      walletStatusDisplay.textContent = '';
+      walletConnectButton.textContent = 'Connect Wallet';
+    }
+
+    async function submitScore() {
+      if (!walletConnected) {
+        alert('Please connect your wallet to submit your score.');
+        return;
+      }
+      try {
+        const result = await wallet.account().functionCall({
+          contractId: 'zen.testnet',
+          methodName: 'submitScore',
+          args: { score: score },
+          gas: '300000000000000',
+          attachedDeposit: '0'
+        });
+        console.log('Score submitted:', result);
+        showAchievement('Score Submitted!');
+        loadLeaderboard();
+      } catch (error) {
+        console.error('Error submitting score:', error);
+        showAchievement('Failed to submit score');
+      }
+    }
+
+    async function loadLeaderboard() {
+      try {
+        const leaderboard = await wallet.account().viewFunction({
+          contractId: 'zen.testnet',
+          methodName: 'getLeaderboard',
+          args: {}
+        });
+        leaderboardBody.innerHTML = '';
+        leaderboard.forEach((entry, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${index + 1}</td><td>${entry.player}</td><td>${entry.score}</td>`;
+          leaderboardBody.appendChild(row);
+          gsap.from(row, { opacity: 0, x: -50, duration: 0.5, delay: index * 0.1 });
+        });
+      } catch (error) {
+        console.error('Error loading leaderboard:', error);
+      }
+    }
+
+    // === Dashboard Functionality ===
+
+    // Toggle between Quiz and Dashboard
+    dashboardButton.addEventListener('click', () => {
+      // Only allow dashboard if wallet is connected
+      if (!walletConnected) {
+        alert('Please connect your wallet to access the dashboard.');
+        return;
+      }
+      document.querySelector('.container').style.display = 'none';
+      dashboard.style.display = 'block';
+      // Default to builder tab on dashboard open
+      tabBuilder.click();
+    });
+    backToQuizButton.addEventListener('click', () => {
+      dashboard.style.display = 'none';
+      document.querySelector('.container').style.display = 'block';
+    });
+
+    // Dashboard Navigation
+    tabBuilder.addEventListener('click', () => {
+      builderSection.style.display = 'block';
+      savedSection.style.display = 'none';
+      apiSection.style.display = 'none';
+    });
+    tabSaved.addEventListener('click', () => {
+      builderSection.style.display = 'none';
+      savedSection.style.display = 'block';
+      apiSection.style.display = 'none';
+      loadSavedWorkflows();
+    });
+    tabApi.addEventListener('click', () => {
+      builderSection.style.display = 'none';
+      savedSection.style.display = 'none';
+      apiSection.style.display = 'block';
+    });
+
+    // Save workflow (demo using localStorage)
+    saveWorkflowButton.addEventListener('click', () => {
+      let workflows = JSON.parse(localStorage.getItem(`workflows_${playerName}`)) || [];
+      workflows.push(codeEditor.value);
+      localStorage.setItem(`workflows_${playerName}`, JSON.stringify(workflows));
+      showAchievement("Workflow saved!");
+      codeEditor.value = '';
+    });
+
+    // Load saved workflows from localStorage
+    function loadSavedWorkflows() {
+      let workflows = JSON.parse(localStorage.getItem(`workflows_${playerName}`)) || [];
+      savedList.innerHTML = '';
+      workflows.forEach((workflow, index) => {
+        let li = document.createElement('li');
+        li.textContent = `Workflow ${index + 1}: ${workflow.substring(0, 50)}...`;
+        savedList.appendChild(li);
+      });
+    }
+
+    // Rent API Key (demo simulation)
+    rentApiButton.addEventListener('click', () => {
+      let apiKey = 'API-' + Math.random().toString(36).substring(2, 15);
+      apiKeyValue.textContent = apiKey;
+      rentedKeyDiv.style.display = 'block';
+      showAchievement("API Key rented!");
+    });
+
+    // Initialize quiz on page load
+    loadQuestion();
+  </script>
+</body>
+</html>
